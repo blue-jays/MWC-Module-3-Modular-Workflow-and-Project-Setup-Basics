@@ -14,6 +14,22 @@ from feast import Field, FeatureStore, Entity, FeatureView, FileSource
 from feast.types import Int64, String
 from feast.value_type import ValueType
 from datetime import datetime, timedelta
+"""
+- Make the config paths, and wrap it in a class.
+- Data Transformation:
+
+    - start the config class so that all the object has the paths.
+    - create feature store
+        - make the file + yml configs, and than open, write it into it.
+        - start the feature store
+
+    - make a datatransformation model, that learned data mapping, and we will 
+    use it to exprolate for data treatment.
+        - 
+
+"""
+
+
 
 @dataclass
 class DataTransformationConfig:
@@ -117,16 +133,16 @@ entity_key_serialization_version: 2"""
                                'occupation', 'relationship', 'race', 'sex', 'capital_gain',
                                'capital_loss', 'hours_per_week', 'native_country']
 
-            input_feature_train_df = train_data.drop(columns=[target_column_name], axis=1)
+            input_feature_train_df = train_data.drop(columns=[target_column_name], axis=1) # Position: Vertical. Affect columns.
             target_feature_train_df = train_data[target_column_name]
 
-            input_feature_test_df = test_data.drop(columns=[target_column_name], axis=1)
+            input_feature_test_df = test_data.drop(columns=[target_column_name], axis=1) # axis=1 means column dimension. So it will drop columns.
             target_feature_test_df = test_data[target_column_name]
 
             logging.info("Applying preprocessing object on training and testing datasets.")
 
-            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
-            input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
+            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df) # learn the statistics, and do treatment on the train.
+            input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df) # use the statistics of the train to treat test.
 
             logging.info("Starting feature store operations")
             
@@ -137,7 +153,9 @@ entity_key_serialization_version: 2"""
             self.push_features_to_store(test_data, "test")
             logging.info("Pushed testing data to feature store")
 
-            train_arr = np.c_[input_feature_train_arr, np.array(target_feature_train_df)]
+
+            # np.c_ means columnwise concatenation. add the features + target. stack side side.
+            train_arr = np.c_[input_feature_train_arr, np.array(target_feature_train_df)]    # treated df in array format.
             test_arr = np.c_[input_feature_test_arr, np.array(target_feature_test_df)]
 
             save_object(
